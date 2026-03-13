@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="a.css">
+
+</head>
+
+<body>
+    <div class="container">
+        <h3>URL Shortener</h3>
+        <form id="shortenForm">
+            <input id="url" type="url" placeholder="Enter URL to shorten" required>
+            <button type="submit">
+                Shorten
+            </button>
+
+        </form>
+
+        <p id="result"></p>
+
+    </div>
+
+    <script>
+
+        const form = document.getElementById("shortenForm");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const url = document.getElementById("url").value;
+            const result = document.getElementById("result");
+            result.innerText = "Generating...";
+
+            try {
+                const res = await fetch("https://url-shortener.adityaraghav0112.workers.dev/shorten", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    result.innerText = data.error;
+                    return;
+                }
+
+                result.innerHTML = `
+                Short URL:
+                <br><br>
+                <a href="${data.short}" target="_blank">${data.short}</a>
+                `;
+            }
+            catch (err) {
+                result.innerText = "Something went wrong.";
+            }
+        });
+
+    </script>
+
+</body>
+
+</html>
