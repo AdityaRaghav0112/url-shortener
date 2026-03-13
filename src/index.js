@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
-// Base32 encoder
 function encodeBase32(num, length) {
   let str = "";
 
@@ -20,7 +19,6 @@ function encodeBase32(num, length) {
   return str.padStart(length, "0");
 }
 
-// Extract first name from full_name parameter
 function extractNameFromURL(originalUrl) {
   try {
     const parsed = new URL(originalUrl);
@@ -37,7 +35,6 @@ function extractNameFromURL(originalUrl) {
   }
 }
 
-// JSON helper
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -58,9 +55,16 @@ export default {
     }
 
     // SHORTEN
-    if (request.method === "POST" && url.pathname === "/shorten") {
+    if (request.method === "POST") {
 
-      const data = await request.json();
+      let data;
+
+      try {
+        data = await request.json();
+      } catch {
+        return json({ error: "Invalid JSON body" }, 400);
+      }
+
       const original = data.url;
       const alias = data.alias;
 
@@ -68,9 +72,14 @@ export default {
         return json({ error: "Missing URL" }, 400);
       }
 
+      try {
+        new URL(original);
+      } catch {
+        return json({ error: "Invalid URL" }, 400);
+      }
+
       let id;
 
-      // Custom alias
       if (alias) {
 
         const exists = await env.URL_STORE.get(alias);
@@ -91,10 +100,8 @@ export default {
         const extracted = extractNameFromURL(original);
 
         if (extracted) {
-          // name + 2 base32 chars
           id = extracted + encodeBase32(counter, 2);
         } else {
-          // digits only
           id = encodeBase32(counter, 4);
         }
       }
@@ -114,23 +121,12 @@ export default {
       const original = await env.URL_STORE.get(id);
 
       if (!original) {
-        return new Response("Not Found", {
-          status: 404,
-          headers: corsHeaders
-        });
+        return new Response("Not Found", { status: 404 });
       }
 
-      return new Response(null, {
-        status: 302,
-        headers: {
-          Location: original,
-          ...corsHeaders
-        }
-      });
+      return Response.redirect(original, 302);
     }
 
-    return new Response("URL Shortener Running", {
-      headers: corsHeaders
-    });
+    return new Response("URL Shortener API Running");
   }
 };
