@@ -29,13 +29,9 @@ export default {
   async fetch(request, env) {
 
     const url = new URL(request.url);
-
-    // CORS preflight
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
-
-    // CREATE SHORT LINK
     if (request.method === "POST" && url.pathname === "/shorten") {
 
       const data = await request.json();
@@ -47,8 +43,6 @@ export default {
       }
 
       let id;
-
-      // CUSTOM ALIAS
       if (alias) {
 
         const exists = await env.URL_STORE.get(alias);
@@ -61,7 +55,6 @@ export default {
 
       } else {
 
-        // increment counter
         let counter = await env.URL_STORE.get("counter");
 
         counter = counter ? parseInt(counter) + 1 : 1;
