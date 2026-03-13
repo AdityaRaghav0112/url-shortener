@@ -1,4 +1,4 @@
-const BASE4 = "0123";
+const BASE32 = "0123456789abcdefghijklmnopqrstuv";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,13 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type"
 };
 
-// Base4 encoder with fixed length
-function encodeBase4(num, length) {
+// Base32 encoder
+function encodeBase32(num, length) {
   let str = "";
 
   while (num > 0) {
-    str = BASE4[num % 4] + str;
-    num = Math.floor(num / 4);
+    str = BASE32[num % 32] + str;
+    num = Math.floor(num / 32);
   }
 
   str = str || "0";
@@ -20,24 +20,18 @@ function encodeBase4(num, length) {
   return str.padStart(length, "0");
 }
 
-// Extract name ONLY if hostname contains "_" or "-"
+// Extract first name from full_name parameter
 function extractNameFromURL(originalUrl) {
   try {
     const parsed = new URL(originalUrl);
-    let host = parsed.hostname;
 
-    if (host.startsWith("www.")) {
-      host = host.slice(4);
-    }
+    const fullName = parsed.searchParams.get("full_name");
 
-    // Only allow names if _ or - exists
-    if (!host.includes("_") && !host.includes("-")) {
-      return null;
-    }
+    if (!fullName) return null;
 
-    const firstPart = host.split(/[._-]/)[0];
+    const firstName = fullName.trim().split(" ")[0];
 
-    return firstPart.slice(0, 8).toLowerCase();
+    return firstName.slice(0, 8).toLowerCase();
   } catch {
     return null;
   }
@@ -96,13 +90,12 @@ export default {
 
         const extracted = extractNameFromURL(original);
 
-        // If URL has name pattern
         if (extracted) {
-          id = extracted + encodeBase4(counter, 2);
-        }
-        // Otherwise digits only
-        else {
-          id = encodeBase4(counter, 4);
+          // name + 2 base32 chars
+          id = extracted + encodeBase32(counter, 2);
+        } else {
+          // digits only
+          id = encodeBase32(counter, 4);
         }
       }
 
